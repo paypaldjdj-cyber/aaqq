@@ -22,7 +22,7 @@ app.config["SECRET_KEY"] = "smile-care-super-secret-key-2026"
 limiter.init_app(app)
 
 CORS(app, resources={r"/api/*": {
-    "origins": ["http://localhost:3000", "https://your-netlify-app.netlify.app"],
+    "origins": ["http://localhost:3000", "https://smilecaresmilecare.netlify.app", "https://your-netlify-app.netlify.app"],
     "allow_headers": ["Content-Type", "Authorization", "X-Username"]
 }})
 

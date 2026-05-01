@@ -190,6 +190,12 @@ def db_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         g.db = get_db()
+        
+        # Security Check: Ensure the token was actually valid and parsed
+        if getattr(g, 'user', None) is None:
+            g.db.close()
+            return jsonify({"error": "Unauthorized Access"}), 401
+            
         try:
             return f(*args, **kwargs)
         finally:
