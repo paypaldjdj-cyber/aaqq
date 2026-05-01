@@ -70,7 +70,14 @@ def init_db():
     conn.execute("INSERT OR IGNORE INTO master_settings (key, value) VALUES ('support_phone', '07XXXXXXXXX')")
     
     # Migrations for master.db
-    columns = [("expiry_date", "TEXT"), ("status", "TEXT DEFAULT 'active'"), ("secretary_enabled", "INTEGER DEFAULT 0"), ("secretary_password", "TEXT")]
+    columns = [
+        ("expiry_date", "TEXT"), 
+        ("status", "TEXT DEFAULT 'active'"), 
+        ("secretary_enabled", "INTEGER DEFAULT 0"), 
+        ("secretary_password", "TEXT"),
+        ("doctor_name", "TEXT"),
+        ("clinic_name", "TEXT")
+    ]
     for col, ctype in columns:
         try: conn.execute(f"ALTER TABLE doctors ADD COLUMN {col} {ctype}")
         except: pass

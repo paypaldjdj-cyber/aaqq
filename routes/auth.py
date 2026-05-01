@@ -7,6 +7,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 auth_bp = Blueprint("auth", __name__)
 
+# Hardcoded key for consistency across modules
+SECRET_KEY = "smile-care-super-secret-key-2026"
+
 # --- Authentication Middleware ---
 def token_required(f):
     @wraps(f)
@@ -15,11 +18,10 @@ def token_required(f):
         if not token:
             return jsonify({"error": "Token is missing"}), 401
         try:
-            # Handle "Bearer <token>" format
             if " " in token:
                 token = token.split(" ")[1]
-            data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-            request.user = data # Store user info in request
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            request.user = data
         except Exception as e:
             return jsonify({"error": "Token is invalid or expired"}), 401
         return f(*args, **kwargs)
@@ -32,11 +34,13 @@ def admin_required(f):
         if not token: return jsonify({"error": "Unauthorized"}), 401
         try:
             if " " in token: token = token.split(" ")[1]
-            data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             if data.get("role") != "admin":
                 return jsonify({"error": "Admin access required"}), 403
             request.user = data
-        except: return jsonify({"error": "Unauthorized"}), 401
+        except Exception as e:
+            print(f"DEBUG AUTH ERROR: {str(e)}") # This will show us the REAL reason
+            return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
     return decorated
 
@@ -60,7 +64,7 @@ def login():
             "username": "admin",
             "role": "admin",
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, current_app.config["SECRET_KEY"], algorithm="HS256")
+        }, SECRET_KEY, algorithm="HS256")
         return jsonify({"token": token, "role": "admin", "username": "admin"})
 
     # Try Doctor/Clinic Login
@@ -93,14 +97,16 @@ def login():
             "role": role,
             "clinic_id": doctor["id"],
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, current_app.config["SECRET_KEY"], algorithm="HS256")
+        }, SECRET_KEY, algorithm="HS256")
 
         res = {
             "token": token,
-            "role": role,
             "username": doctor["username"],
-            "clinic_name": doctor["clinic_name"],
-            "doctor_name": doctor["doctor_name"]
+            "role": role,
+            "clinic_id": doctor["id"],
+            "clinic_name": doctor.get("clinic_name", ""),
+            "doctor_name": doctor.get("doctor_name", ""),
+            "expiry_date": doctor.get("expiry_date", "")
         }
         master_conn.close()
         return jsonify(res)
