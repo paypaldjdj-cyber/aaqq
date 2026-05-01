@@ -20,17 +20,18 @@ def get_master_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def get_db():
-    token = request.headers.get("Authorization")
-    username = "default"
-    if token:
-        try:
-            if " " in token: token = token.split(" ")[1]
-            data = jwt.decode(token, "smile-care-super-secret-key-2026", algorithms=["HS256"])
-            username = data.get("username")
-            g.user = data
-        except:
-            pass
+def get_db(username=None):
+    if not username:
+        token = request.headers.get("Authorization")
+        username = "default"
+        if token:
+            try:
+                if " " in token: token = token.split(" ")[1]
+                data = jwt.decode(token, "smile-care-super-secret-key-2026", algorithms=["HS256"])
+                username = data.get("username")
+                g.user = data
+            except:
+                pass
 
     db_name = f"clinic_{username}.db"
     db_path = os.path.join(DB_FOLDER, db_name)
@@ -49,11 +50,15 @@ def init_db():
             username TEXT UNIQUE,
             password TEXT,
             clinic_name TEXT,
+            doctor_name TEXT,
             expiry_date TEXT,
             status TEXT DEFAULT 'active',
+            secretary_enabled INTEGER DEFAULT 0,
+            secretary_password TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        CREATE INDEX IF NOT EXISTS idx_doctors_username ON doctors(username);
+        )
     """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_doctors_username ON doctors(username)")
     
     # Master Settings Table
     conn.execute("""

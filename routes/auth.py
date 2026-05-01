@@ -43,7 +43,7 @@ def admin_required(f):
 from extensions import limiter
 
 @auth_bp.route("/login", methods=["POST"])
-@limiter.limit("5 per minute")
+@limiter.limit("20 per minute")
 def login():
     data = request.json or {}
     u = data.get("username")
